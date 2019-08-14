@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommonUtilities;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -15,6 +16,7 @@ namespace DockerService
     public partial class DockerService : ServiceBase
     {
         private int eventId = 1;
+        AppLogger _appLogger = AppLogger.GetLogger(typeof(Program));
 
         public enum ServiceState
         {
@@ -45,10 +47,10 @@ namespace DockerService
         public DockerService()
         {
             InitializeComponent();
-            eventLog = new System.Diagnostics.EventLog();
-            if (!System.Diagnostics.EventLog.SourceExists("MySource"))
+            eventLog = new EventLog();
+            if (!EventLog.SourceExists("MySource"))
             {
-                System.Diagnostics.EventLog.CreateEventSource(
+                EventLog.CreateEventSource(
                     "MySource", "MyNewLog");
             }
             eventLog.Source = "MySource";
@@ -58,10 +60,11 @@ namespace DockerService
         protected override void OnStart(string[] args)
         {
             eventLog.WriteEntry("In OnStart.");
+            _appLogger.Info($"OnStart: {DateTime.Now}");
 
             Timer timer = new Timer();
             timer.Interval = 60000; // 60 seconds
-            timer.Elapsed += new ElapsedEventHandler(this.OnTimer);
+            timer.Elapsed += new ElapsedEventHandler(OnTimer);
             timer.Start();
 
             // Update the service state to Start Pending.
@@ -78,6 +81,7 @@ namespace DockerService
         private void OnTimer(object sender, ElapsedEventArgs e)
         {
             eventLog.WriteEntry("Monitoring the System", EventLogEntryType.Information, eventId++);
+            _appLogger.Info($"OnTimer: {DateTime.Now}");
         }
 
         protected override void OnStop()
@@ -93,6 +97,7 @@ namespace DockerService
             SetServiceStatus(ServiceHandle, ref serviceStatus);
 
             eventLog.WriteEntry("In OnStop.");
+            _appLogger.Info($"OnStop: {DateTime.Now}");
         }
 
         protected override void OnContinue()
